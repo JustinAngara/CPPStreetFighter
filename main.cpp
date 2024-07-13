@@ -40,24 +40,36 @@ void setupConfig(){
     combos['1'] = "Spin Dive Smasher";
     combos['2'] = "Delta Red Assault";
     combos['3'] = "Bolshoi Storm Buster";
-    combos['e'] = "Screw Piledriver";
-    combos['q'] = "CommandGrab";
-    combos['z'] = "Quick Spin Knuckle";
-    combos['c'] = "JumpGrab";
+    combos['E'] = "Screw Piledriver";
+    combos['Q'] = "CommandGrab";
+    combos['Z'] = "Quick Spin Knuckle";
+    combos['C'] = "JumpGrab";
 
 }
 
 void start(){
+
     while(true){
-//        if(GetKeyState('1') & 0x8000){
-//            cout<<"test";
-//        }
+        if(GetKeyState('0') & 0x8000){
+            canChangeDir = false;
+        }else if(GetKeyState('9') & 0x8000){
+            canChangeDir = true;
+        }
+
+        if(GetKeyState('A') & 0x8000 && canChangeDir){
+            isFacingRight = false;
+        } else if (GetKeyState('D') & 0x8000 && canChangeDir){
+            isFacingRight = true;
+        }
+
+
         for ( const auto &p : combos ){
 
             if(GetKeyState(p.first) & 0x8000){
-
+                canChangeDir = false;
                 callAHK(p.second);
-                _sleep(50);
+                canChangeDir = true;
+                _sleep(500);
             }
         }
     }
