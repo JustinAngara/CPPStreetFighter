@@ -19,17 +19,20 @@ const char* widePath;
 map<char, string> combos;
 
 
-void callAHK(string p){
-    p = path + p +".exe";
+void callAHK(string p, bool isFacingRight){
+
+    if(!isFacingRight){ // facing left
+        p = "L" + p;
+    }
+
+    p+=".exe";
     cout<<p<<endl;
-    widePath = p.c_str();
+    widePath = (path+p).c_str();
     STARTUPINFO startInfo = {0};
     PROCESS_INFORMATION processInfo = {0};
     BOOL b = CreateProcess(TEXT(widePath), NULL, NULL, NULL, FALSE, NULL, NULL, NULL, &startInfo, &processInfo);
     if(b){
-        cout<<"done";
-    } else {
-        cout<<"failed";
+        cout<<"done" << endl;
     }
 }
 
@@ -67,7 +70,7 @@ void start(){
 
             if(GetKeyState(p.first) & 0x8000){
                 canChangeDir = false;
-                callAHK(p.second);
+                callAHK(p.second, isFacingRight);
                 canChangeDir = true;
                 _sleep(500);
             }
