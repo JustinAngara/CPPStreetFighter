@@ -50,9 +50,81 @@ void setupConfig(){
 
 }
 
+// fix later, for juri's drive impact code.
+
+bool hasSufficientBlackPixels(){
+    // Get the primary monitor's DC
+    HDC hScreenDC = GetDC(NULL);
+
+    // Create a compatible DC
+    HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
+
+    // Get screen dimensions
+    int width = 2049-416;
+    int height = 973-342;
+
+    // Create a compatible bitmap
+    HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, width, height);
+
+    // Select the bitmap into the compatible DC
+    HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemoryDC, hBitmap);
+
+    // BitBlt the screen to the memory DC
+    BitBlt(hMemoryDC, 0, 0, width, height, hScreenDC, 0, 0, SRCCOPY);
+
+    // Get bitmap information
+    BITMAPINFOHEADER bi;
+    memset(&bi, 0, sizeof(BITMAPINFOHEADER));
+    bi.biSize = sizeof(BITMAPINFOHEADER);
+    bi.biWidth = width;
+    bi.biHeight = -height; // Negative height for top-down bitmap
+    bi.biPlanes = 1;
+    bi.biBitCount = 24; // Assuming 24-bit bitmap
+    bi.biCompression = BI_RGB;
+
+    // Create a buffer for bitmap data
+    int imageSize = width * height * 3; // Assuming 24-bit bitmap
+    unsigned char* imageData = new unsigned char[imageSize];
+
+    // Get bitmap bits
+    GetDIBits(hMemoryDC, hBitmap, 0, height, imageData, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+
+    int count = 0;
+    for (int y = 342; y < height; y+=2) {
+        for (int x = 416; x < width; x+=2) {
+            // Calculate the index of the pixel in the imageData array
+            int index = (y * width + x) * 3; // Assuming 24-bit bitmap
+
+            // Extract RGB values
+            unsigned char blue = imageData[index];
+            unsigned char green = imageData[index + 1];
+            unsigned char red = imageData[index + 2];
+            if(red+green+blue==0){
+                count++;
+            }
+        }
+    }
+
+
+    // Clean up
+    DeleteObject(hBitmap);
+    SelectObject(hMemoryDC, hOldBitmap);
+    DeleteDC(hMemoryDC);
+    ReleaseDC(NULL, hScreenDC);
+    delete[] imageData;
+
+    return count <= 100000 && count >= 8000;
+}
+
+
+
+
 void start(){
 
     while(true){
+        if(hasSufficientBlackPixels()){
+            cout<<"found";
+        }
         if(GetKeyState('0') & 0x8000){
             canChangeDir = false;
         }else if(GetKeyState('9') & 0x8000){
@@ -77,37 +149,6 @@ void start(){
         }
     }
 }
-
-// fix later, for juri's drive impact code.
-/*
-bool hasSufficientBlackPixels(){
-    int num = 0;
-    int r,g,b;
-    HDC dcScreen = GetDC(0);
-    HDC dcTarget = CreateCompatibleDC(dcScreen);
-    HBITMAP bmpTarget = CreateCompatibleBitmap(dcScreen);
-    HGDIOBJ oldBmp = SelectObject(dcTarget, bmpTarget);
-    BitBlt(dcTarget, 0, 0, cx, cy, dcDesktop, x, y, SRCCOPY | CAPTUREBLT);
-    SelectObject(dcTarget, oldBmp);
-    COLORREF color;
-    for(int x = 416; x<2049; x+=2) {
-        for(int y = 342; y<973; y+=2) {
-            color = GetPixel(hdc, x, y);
-            r = (color>>16) & 0xFF;
-            g = (color>>8) & 0xFF;
-            b = color & 0xFF;
-            cout<<"r, g , b: (" << r << ", " << g << ", "<<b << ")\n";
-
-            if(r+g+b==0) { // is black pixel
-                num++;
-            }
-
-        }
-    }
-    cout<<num;
-    return num <= 100000 && num >= 8000;
-}
-*/
 
 
 int main() {
